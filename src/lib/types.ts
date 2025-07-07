@@ -13,6 +13,7 @@ export interface Branch {
 export interface Vehicle {
   id: string;
   registrationNumber: string;
+  model: string;
   type: '20ft Container' | '40ft Container' | 'Open Body' | 'Tanker';
   driverId: string | null;
   status: 'On Road' | 'Available' | 'Maintenance';
@@ -28,13 +29,17 @@ export interface Driver {
   licenseExpiry: string;
   vehicleId: string | null;
   salary: number;
+  photoUrl?: string;
+  licensePhotoUrl?: string;
+  aadharPhotoUrls?: string[];
+  otherDocumentUrls?: string[];
 }
 
 export interface Customer {
   name: string;
   address: string;
-  gst: string;
-  phone?: string; // Added for create bill form
+  gst?: string;
+  phone?: string;
 }
 
 export interface Shipment {
@@ -44,10 +49,28 @@ export interface Shipment {
   destination: string;
   consignor: Customer;
   consignee: Customer;
-  packages: { count: number; description: string; weight: number };
+  packages: number;
+  weight: number;
+  value: number;
   status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
-  vehicleId: string;
-  billId?: string;
+  vehicleId: string | null;
+  billId: string | null;
+  loadingSheetId: string | null;
+}
+
+export interface BillArticle {
+  quantity: number;
+  packageType: string;
+  details: string;
+  amount: number;
+}
+
+export interface BillCharges {
+  freight: number;
+  surcharge: number;
+  hamali: number;
+  doorDelivery: number;
+  other: number;
 }
 
 export interface Bill {
@@ -55,10 +78,11 @@ export interface Bill {
   shipmentId: string;
   date: string;
   dueDate: string;
-  clientName: string;
   status: 'Paid' | 'Unpaid' | 'Overdue';
   chargeStatus: 'Paid' | 'To Pay' | 'TBB';
-  items: { description: string; hsnCode: string; amount: number }[];
+  gstPaidBy: 'consignor' | 'consignee' | 'transport';
+  articles: BillArticle[];
+  charges: BillCharges;
   subtotal: number;
   cgst: number;
   sgst: number;
@@ -66,11 +90,12 @@ export interface Bill {
   total: number;
 }
 
+
 export interface LoadingSheet {
   id: string;
   date: string;
   vehicleId: string;
   driverId: string;
-  route: string;
+  branchId: string;
   shipmentIds: string[];
 }

@@ -1,132 +1,130 @@
-import { Bill as BillType, Shipment, Vehicle, Driver } from '@/lib/types';
-import { Separator } from './ui/separator';
-import { Truck } from 'lucide-react';
+import { Bill as BillType, Shipment, Vehicle, Driver } from "@/lib/types";
+import { format } from "date-fns";
 
 interface BillProps {
   bill: BillType;
   shipment: Shipment;
-  vehicle: Vehicle | undefined;
-  driver: Driver | undefined;
+  vehicle?: Vehicle;
+  driver?: Driver;
 }
 
 export function Bill({ bill, shipment, vehicle, driver }: BillProps) {
-  const numberToWords = (num: number): string => {
-    const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
-    const b = ['', '', 'twenty','thirty','forty','fifty', 'sixty','seventy','eighty','ninety'];
-    
-    if ((num = num.toString()).length > 9) return 'overflow';
-    const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-    if (!n) return '';
-    let str = '';
-    str += (n[1] != '00') ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
-    str += (n[2] != '00') ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
-    str += (n[3] != '00') ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
-    str += (n[4] != '00') ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
-    str += (n[5] != '00') ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
-    return str.trim().toUpperCase() + ' ONLY';
+  const isIntraState = shipment.origin.split(', ')[1] === shipment.destination.split(', ')[1];
+  const totalArticleAmount = bill.articles.reduce((sum, item) => sum + item.amount, 0);
+  const totalCharges = Object.values(bill.charges).reduce((sum, charge) => sum + charge, 0);
+
+  const renderChargeRow = (label: string, value: number) => {
+    if (value > 0) {
+      return (
+        <tr>
+          <td colSpan={4} className="text-right pr-4">{label}</td>
+          <td className="text-right">₹{value.toLocaleString('en-IN')}</td>
+        </tr>
+      );
+    }
+    return null;
   };
 
   return (
-    <div className="bg-white text-black p-8 rounded-lg shadow-lg max-w-4xl mx-auto my-8 print-container">
-      <header className="flex justify-between items-start pb-4 border-b-2 border-gray-800">
+    <div className="bg-white text-black p-8 font-sans printable-area">
+      <header className="flex justify-between items-center pb-4 border-b-2 border-black">
         <div>
-          <h1 className="text-3xl font-bold text-blue-600 flex items-center"><Truck className="mr-2"/> Vahan Sarthi Logistics</h1>
-          <p>123 Transport Nagar, Mumbai, Maharashtra, 400001</p>
-          <p>GSTIN: 27ABCDE1234F1Z5 | Email: contact@vahansarthi.com</p>
+          <h1 className="text-4xl font-bold text-gray-800">Vahan Sarthi</h1>
+          <p className="text-gray-600">Your Trusted Logistics Partner</p>
         </div>
         <div className="text-right">
-          <h2 className="text-2xl font-bold uppercase">Tax Bill</h2>
-          <p><span className="font-semibold">Original for Recipient</span></p>
+          <h2 className="text-2xl font-bold">INVOICE</h2>
+          <p className="text-sm"><strong>Bill No:</strong> {bill.id}</p>
+          <p className="text-sm"><strong>Date:</strong> {format(new Date(bill.date), 'dd/MM/yyyy')}</p>
         </div>
       </header>
 
-      <section className="grid grid-cols-2 gap-4 my-4">
+      <section className="grid grid-cols-2 gap-8 my-6">
         <div>
-          <h3 className="font-bold mb-1">Billed To:</h3>
-          <p>{shipment.consignor.name}</p>
+          <h3 className="font-bold mb-2 underline">Consignor (From)</h3>
+          <p className="font-semibold">{shipment.consignor.name}</p>
           <p>{shipment.consignor.address}</p>
-          <p>GSTIN: {shipment.consignor.gst}</p>
+          {shipment.consignor.phone && <p>Phone: {shipment.consignor.phone}</p>}
+          {shipment.consignor.gst && <p>GSTIN: {shipment.consignor.gst}</p>}
         </div>
         <div className="text-right">
-          <p><span className="font-semibold">Bill No:</span> {bill.id}</p>
-          <p><span className="font-semibold">Bill Date:</span> {bill.date}</p>
-          <p><span className="font-semibold">Due Date:</span> {bill.dueDate}</p>
-          <p><span className="font-semibold">LR No:</span> {shipment.id}</p>
-        </div>
-        <div>
-          <h3 className="font-bold mb-1">Shipped To:</h3>
-          <p>{shipment.consignee.name}</p>
+          <h3 className="font-bold mb-2 underline">Consignee (To)</h3>
+          <p className="font-semibold">{shipment.consignee.name}</p>
           <p>{shipment.consignee.address}</p>
-          <p>GSTIN: {shipment.consignee.gst}</p>
-        </div>
-        <div className="text-right">
-            <p><span className="font-semibold">Vehicle No:</span> {vehicle?.registrationNumber}</p>
-            <p><span className="font-semibold">Driver:</span> {driver?.name}</p>
-            <p><span className="font-semibold">Origin:</span> {shipment.origin}</p>
-            <p><span className="font-semibold">Destination:</span> {shipment.destination}</p>
+          {shipment.consignee.phone && <p>Phone: {shipment.consignee.phone}</p>}
+          {shipment.consignee.gst && <p>GSTIN: {shipment.consignee.gst}</p>}
         </div>
       </section>
 
-      <Separator className="my-4 bg-gray-400" />
-
-      <table className="w-full text-left">
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="p-2">#</th>
-            <th className="p-2">Description of Services</th>
-            <th className="p-2">HSN/SAC</th>
-            <th className="p-2 text-right">Amount (₹)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bill.items.map((item, index) => (
-            <tr key={index} className="border-b">
-              <td className="p-2">{index + 1}</td>
-              <td className="p-2">{item.description}</td>
-              <td className="p-2">{item.hsnCode}</td>
-              <td className="p-2 text-right">{item.amount.toFixed(2)}</td>
+      <section className="my-6">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100">
+            <tr className="border-y border-gray-300">
+              <th className="p-2 text-left">Qty</th>
+              <th className="p-2 text-left">Package Type</th>
+              <th className="p-2 text-left">Description</th>
+              <th className="p-2 text-right">Weight (Kg)</th>
+              <th className="p-2 text-right">Amount</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {bill.articles.map((item, index) => (
+              <tr key={index} className="border-b border-gray-200">
+                <td className="p-2">{item.quantity}</td>
+                <td className="p-2">{item.packageType}</td>
+                <td className="p-2">{item.details}</td>
+                <td className="p-2 text-right">{index === 0 ? shipment.weight.toLocaleString('en-IN') : '-'}</td>
+                <td className="p-2 text-right">₹{item.amount.toLocaleString('en-IN')}</td>
+              </tr>
+            ))}
+            <tr className="font-semibold">
+              <td colSpan={4} className="text-right p-2 pr-4">Total Article Amount</td>
+              <td className="text-right p-2">₹{totalArticleAmount.toLocaleString('en-IN')}</td>
+            </tr>
+            {renderChargeRow("Freight Charges", bill.charges.freight)}
+            {renderChargeRow("Surcharge", bill.charges.surcharge)}
+            {renderChargeRow("Hamali Charges", bill.charges.hamali)}
+            {renderChargeRow("Door Delivery", bill.charges.doorDelivery)}
+            {renderChargeRow("Other Charges", bill.charges.other)}
+          </tbody>
+        </table>
+      </section>
 
-      <section className="grid grid-cols-2 mt-4">
+      <section className="grid grid-cols-2 gap-8 my-6">
         <div>
-          <p className="font-bold">Amount in Words:</p>
-          <p className="text-sm">{numberToWords(bill.total)}</p>
+          <h3 className="font-bold mb-2">Shipment Details</h3>
+          <p><strong>LR No:</strong> {shipment.id}</p>
+          {vehicle && <p><strong>Vehicle No:</strong> {vehicle.registrationNumber}</p>}
+          {driver && <p><strong>Driver Name:</strong> {driver.name}</p>}
+          <p><strong>Charge Status:</strong> <span className="font-semibold">{bill.chargeStatus}</span></p>
         </div>
         <div className="text-right">
-          <div className="grid grid-cols-2 gap-x-4">
-            <p>Subtotal:</p><p>₹{bill.subtotal.toFixed(2)}</p>
-            {bill.cgst > 0 && <>
-              <p>CGST (9%):</p><p>₹{bill.cgst.toFixed(2)}</p>
-              <p>SGST (9%):</p><p>₹{bill.sgst.toFixed(2)}</p>
-            </>}
-            {bill.igst > 0 && <>
-              <p>IGST (18%):</p><p>₹{bill.igst.toFixed(2)}</p>
-            </>}
-            <p className="font-bold border-t-2 border-gray-800 pt-1 mt-1">Total:</p>
-            <p className="font-bold border-t-2 border-gray-800 pt-1 mt-1">₹{bill.total.toFixed(2)}</p>
-          </div>
+          <table className="w-full max-w-xs float-right">
+            <tbody>
+              <tr>
+                <td className="py-1 pr-4">Subtotal:</td>
+                <td className="py-1 font-semibold">₹{bill.subtotal.toLocaleString('en-IN')}</td>
+              </tr>
+              {isIntraState ? (
+                <>
+                  <tr><td className="py-1 pr-4">CGST (9%):</td><td className="py-1 font-semibold">+ ₹{bill.cgst.toLocaleString('en-IN')}</td></tr>
+                  <tr><td className="py-1 pr-4">SGST (9%):</td><td className="py-1 font-semibold">+ ₹{bill.sgst.toLocaleString('en-IN')}</td></tr>
+                </>
+              ) : (
+                <tr><td className="py-1 pr-4">IGST (18%):</td><td className="py-1 font-semibold">+ ₹{bill.igst.toLocaleString('en-IN')}</td></tr>
+              )}
+              <tr className="border-t-2 border-black font-bold text-lg">
+                <td className="pt-2 pr-4">Grand Total:</td>
+                <td className="pt-2">₹{bill.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <Separator className="my-4 bg-gray-400" />
-
-      <footer className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <h4 className="font-bold mb-2">Terms & Conditions</h4>
-          <ol className="list-decimal list-inside text-xs">
-            <li>Payment due within 30 days.</li>
-            <li>Interest @18% p.a. will be charged on overdue bills.</li>
-            <li>All disputes subject to Mumbai jurisdiction.</li>
-          </ol>
-        </div>
-        <div className="text-right">
-          <h4 className="font-bold mb-2">For Vahan Sarthi Logistics</h4>
-          <div className="h-16"></div>
-          <p className="border-t border-gray-400 pt-1">Authorised Signatory</p>
-        </div>
+      <footer className="pt-4 border-t text-xs text-gray-600">
+        <p><strong>Terms &amp; Conditions:</strong> Payment due within 30 days. Please make all cheques payable to Vahan Sarthi Logistics.</p>
+        <p className="text-center mt-4">Thank you for your business!</p>
       </footer>
     </div>
   );

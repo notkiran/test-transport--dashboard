@@ -1,12 +1,11 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Driver, Vehicle } from "@/lib/types"
+import { Driver } from "@/lib/types"
 import { sampleVehicles } from "@/data/sampleData"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
-import { ArrowUpDown, Eye, FilePenLine, MoreHorizontal, Trash2 } from "lucide-react"
-import { toast } from "sonner"
+import { ArrowUpDown, FilePenLine, MoreHorizontal, Trash2 } from "lucide-react"
 import { Checkbox } from "../ui/checkbox"
 
 const getVehicleReg = (vehicleId: string | null) => {
@@ -15,16 +14,12 @@ const getVehicleReg = (vehicleId: string | null) => {
   return vehicle ? <span className="font-mono bg-muted px-2 py-1 rounded-md text-xs">{vehicle.registrationNumber}</span> : <span className="text-muted-foreground">Unknown</span>;
 };
 
-const handleEdit = (driverId: string) => toast.info(`Edit action for driver ${driverId} is not implemented yet.`);
-const handleView = (driverId: string) => toast.info(`View action for driver ${driverId} is not implemented yet.`);
-const handleDelete = (driverId: string) => {
-  toast.error(`Are you sure you want to delete driver ${driverId}?`, {
-    action: { label: 'Delete', onClick: () => toast.success(`Driver ${driverId} has been deleted.`) },
-    cancel: { label: 'Cancel' },
-  });
-};
+interface DriverColumnActions {
+  onEdit: (driver: Driver) => void;
+  onDelete: (driver: Driver) => void;
+}
 
-export const columns: ColumnDef<Driver>[] = [
+export const getDriverColumns = ({ onEdit, onDelete }: DriverColumnActions): ColumnDef<Driver>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -130,16 +125,12 @@ export const columns: ColumnDef<Driver>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleEdit(driver.id)}>
+            <DropdownMenuItem onClick={() => onEdit(driver)}>
               <FilePenLine className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleView(driver.id)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
+              Edit / View Details
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => handleDelete(driver.id)}>
+            <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(driver)}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
@@ -149,3 +140,6 @@ export const columns: ColumnDef<Driver>[] = [
     },
   },
 ]
+
+// Keep the old export for other tables that might be using it, though none are yet.
+export { getDriverColumns as columns };
